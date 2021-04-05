@@ -25,7 +25,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.openpnp.ConfigurationListener;
 import org.openpnp.spi.NozzleTip;
+import org.openpnp.spi.PartAlignment;
 import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementList;
@@ -50,8 +52,17 @@ public class Package extends AbstractModelObject implements Identifiable {
     @Attribute(required = false)
     private double placeBlowOffLevel;
 
+    @Deprecated
     @Element(required = false)
     private Footprint footprint;
+
+    @Element(required = false)
+    private Outline outline;
+
+    @Attribute(required = false)
+    private String partAlignmentId;
+
+    private PartAlignment partAlignment;
     
     @ElementList(required = false)
     protected List<String> compatibleNozzleTipIds = new ArrayList<>();
@@ -65,6 +76,12 @@ public class Package extends AbstractModelObject implements Identifiable {
     public Package(String id) {
         this.id = id;
         footprint = new Footprint();
+        Configuration.get().addListener(new ConfigurationListener.Adapter() {
+            @Override
+            public void configurationLoaded(Configuration configuration) throws Exception {
+                partAlignment = (PartAlignment) configuration.getMachine().getPartAlignment(partAlignmentId);
+            }
+        });
     }
 
     @Override
@@ -124,14 +141,36 @@ public class Package extends AbstractModelObject implements Identifiable {
         return pickVacuumLevel;
     }
 
+    @Deprecated
     public Footprint getFootprint() {
         return footprint;
     }
 
+    @Deprecated
     public void setFootprint(Footprint footprint) {
         Object oldValue = this.footprint;
         this.footprint = footprint;
         firePropertyChange("footprint", oldValue, footprint);
+    }
+
+    public Outline getOutline() {
+        return outline;
+    }
+
+    public void setOutline(Outline outline) {
+        Object oldValue = this.outline;
+        this.outline = outline;
+        firePropertyChange("outline", oldValue, footprint);
+    }
+
+    public PartAlignment getPartAlignment() {
+        return partAlignment;
+    }
+    public void setPartAlignment(PartAlignment partAlignment) {
+        Object oldValue = this.partAlignment;
+        this.partAlignment = partAlignment;
+        this.partAlignmentId = partAlignment.getId();
+        firePropertyChange("partAlignment", oldValue, partAlignment);
     }
 
     @Override

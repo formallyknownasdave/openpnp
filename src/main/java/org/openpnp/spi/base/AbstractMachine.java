@@ -252,6 +252,31 @@ public abstract class AbstractMachine extends AbstractModelObject implements Mac
         return Collections.unmodifiableList(partAlignments);
     }
 
+    public void addPartAlignment(PartAlignment partAlignment) throws Exception {
+        partAlignments.add(partAlignment);
+        fireIndexedPropertyChange("partAlignments", partAlignments.size() - 1, null, partAlignment);
+    }
+
+    public void removePartAlignment(PartAlignment partAlignment) {
+        int index = partAlignments.indexOf(partAlignment);
+        if (partAlignments.remove(partAlignment)) {
+            fireIndexedPropertyChange("partAlignments", index, partAlignment, null);
+        }
+    }
+
+    public PartAlignment getPartAlignment(String id) {
+        return partAlignments.get(id);
+    }
+
+    public PartAlignment getPartAlignmentByName(String name) {
+        for (PartAlignment partAlignment : partAlignments) {
+            if (partAlignment.getName().equals(name)) {
+                return partAlignment;
+            }
+        }
+        return null;
+    }
+
     @Override
     public List<Actuator> getActuators() {
         return Collections.unmodifiableList(actuators);

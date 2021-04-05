@@ -181,6 +181,8 @@ public interface Machine extends WizardConfigurable, PropertySheetHolder, Closea
 
     public List<Class<? extends MotionPlanner>> getCompatibleMotionPlannerClasses();
 
+    public List<Class<? extends PartAlignment>> getCompatiblePartAlignmentClasses();
+
     public void addAxis(Axis axis) throws Exception;
 
     public void removeAxis(Axis axis);
@@ -316,6 +318,14 @@ public interface Machine extends WizardConfigurable, PropertySheetHolder, Closea
     public Head getDefaultHead() throws Exception;
 
     public List<PartAlignment> getPartAlignments();
+
+    public void addPartAlignment(PartAlignment partAlignment) throws Exception;
+
+    public void removePartAlignment(PartAlignment partAlignment);
+
+    public PartAlignment getPartAlignment(String id);
+
+    public PartAlignment getPartAlignmentByName(String name);
 
     public FiducialLocator getFiducialLocator();
 

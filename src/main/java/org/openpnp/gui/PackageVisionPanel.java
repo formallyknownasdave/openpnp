@@ -23,6 +23,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -49,35 +51,40 @@ import org.openpnp.gui.components.CameraView;
 import org.openpnp.gui.components.ComponentDecorators;
 import org.openpnp.gui.components.reticle.FootprintReticle;
 import org.openpnp.gui.components.reticle.Reticle;
-import org.openpnp.gui.support.DoubleConverter;
-import org.openpnp.gui.support.Helpers;
-import org.openpnp.gui.support.Icons;
+import org.openpnp.gui.support.*;
 import org.openpnp.gui.tablemodel.FootprintTableModel;
-import org.openpnp.model.Configuration;
-import org.openpnp.model.Footprint;
+import org.openpnp.model.*;
 import org.openpnp.model.Footprint.Pad;
-import org.openpnp.model.LengthUnit;
+import org.openpnp.model.Package;
 import org.openpnp.spi.Camera;
 
 import com.jgoodies.forms.layout.ColumnSpec;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
+import org.openpnp.spi.Machine;
+import org.openpnp.spi.PartAlignment;
+import org.openpnp.spi.base.AbstractMachine;
 
 @SuppressWarnings("serial")
-public class PackageVisionPanel extends JPanel {
-    private FootprintTableModel tableModel;
-    private JTable table;
+public class PackageVisionPanel extends JPanel implements WizardContainer {
+    private Package pkg;
+    // Fields
+    private JTextField bodyWidthTf;
+    private JTextField bodyHeightTf;
+    private JComboBox unitsCombo;
+    private JComboBox inputPartAlignmentCombo;
+    // Models
+    private ModelComboBoxModel<PartAlignment> inputPartAlignmentModel;
+    // Panels
+    JPanel panelWizard;
 
-    final private Footprint footprint;
-
-    public PackageVisionPanel(Footprint footprint) {
-        this.footprint = footprint;
+    public PackageVisionPanel(Package pkg) {
+        this.pkg = pkg;
+        AbstractMachine machine = (AbstractMachine)(Configuration.get().getMachine());
 
         setLayout(new BorderLayout(0, 0));
-        tableModel = new FootprintTableModel(footprint);
 
-        deleteAction.setEnabled(false);
 
         JPanel propertiesPanel = new JPanel();
         add(propertiesPanel, BorderLayout.NORTH);
@@ -86,10 +93,11 @@ public class PackageVisionPanel extends JPanel {
                         TitledBorder.LEADING, TitledBorder.TOP, null));
         propertiesPanel.setLayout(new FormLayout(
                 new ColumnSpec[] {FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
+                        FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"),
+                        FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
                         FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"),},
                 new RowSpec[] {FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,}));
+                        FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,FormSpecs.RELATED_GAP_ROWSPEC}));
 
         JLabel lblUnits = new JLabel("Units");
         propertiesPanel.add(lblUnits, "2, 2, right, default");
@@ -97,58 +105,66 @@ public class PackageVisionPanel extends JPanel {
         unitsCombo = new JComboBox(LengthUnit.values());
         propertiesPanel.add(unitsCombo, "4, 2, left, default");
 
+        JLabel lblPartAlignment = new JLabel("Part Alignment");
+        propertiesPanel.add(lblPartAlignment, "2, 4, right, default");
+
+        inputPartAlignmentModel = new ModelComboBoxModel<PartAlignment>(machine, "partAlignments", false);
+        inputPartAlignmentCombo = new JComboBox(inputPartAlignmentModel);
+        propertiesPanel.add(inputPartAlignmentCombo, "4, 4, left, default");
+
         JLabel lblBodyWidth = new JLabel("Body Width");
-        propertiesPanel.add(lblBodyWidth, "2, 4, right, default");
+        propertiesPanel.add(lblBodyWidth, "6, 2, right, default");
 
         bodyWidthTf = new JTextField();
-        propertiesPanel.add(bodyWidthTf, "4, 4, left, default");
+        propertiesPanel.add(bodyWidthTf, "8, 2, left, default");
         bodyWidthTf.setColumns(10);
 
         JLabel lblBodyHeight = new JLabel("Body Length");
-        propertiesPanel.add(lblBodyHeight, "2, 6, right, default");
+        propertiesPanel.add(lblBodyHeight, "6, 4, right, default");
 
         bodyHeightTf = new JTextField();
-        propertiesPanel.add(bodyHeightTf, "4, 6, left, default");
+        propertiesPanel.add(bodyHeightTf, "8, 4, left, default");
         bodyHeightTf.setColumns(10);
 
-        JPanel tablePanel = new JPanel();
-        add(tablePanel, BorderLayout.CENTER);
-        tablePanel.setBorder(
-                new TitledBorder(null, "Pads", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        panelWizard = new JPanel();
+        panelWizard.setLayout(new BorderLayout(0,0));
+        // Add alignment configuration wizard
+        PartAlignment alignment = this.pkg.getPartAlignment();
+        if (alignment != null) {
+            Wizard wizard = alignment.getConfigurationWizard(this.pkg);
+            if (wizard != null) {
+                setWizardPanel(wizard);
+            }
+            else
+            {
+                setMessage("No configuration wizard available for this alignment");
+            }
+        }
+        else {
+            setMessage("No alignment method specified");
+        }
+        add(panelWizard, BorderLayout.CENTER);
 
-        table = new AutoSelectTextTable(tableModel);
-        table.setAutoCreateRowSorter(true);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        this.pkg.addPropertyChangeListener("partAlignment", new PropertyChangeListener() {
             @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (e.getValueIsAdjusting()) {
-                    return;
+            public void propertyChange(PropertyChangeEvent evt) {
+                PartAlignment method = (PartAlignment)(evt.getNewValue());
+                panelWizard.removeAll();
+                if (method != null) {
+                    if (method.getConfigurationWizard(pkg) != null) {
+                        setWizardPanel(method.getConfigurationWizard(pkg));
+                    }
+                    else {
+                        setMessage("No configuration wizard available for this alignment");
+                    }
                 }
-
-                Pad pad = getSelectedPad();
-
-                deleteAction.setEnabled(pad != null);
+                else {
+                    setMessage("No alignment method specified");
+                }
+                panelWizard.validate();
+                panelWizard.repaint();
             }
         });
-        tablePanel.setLayout(new BorderLayout(0, 0));
-
-        JPanel toolbarPanel = new JPanel();
-        tablePanel.add(toolbarPanel, BorderLayout.NORTH);
-        toolbarPanel.setLayout(new BorderLayout(0, 0));
-
-        JToolBar toolBar = new JToolBar();
-        toolBar.setFloatable(false);
-        toolbarPanel.add(toolBar);
-
-        toolBar.add(newAction);
-        toolBar.add(deleteAction);
-
-        JScrollPane tableScrollPane = new JScrollPane(table);
-        tableScrollPane.setPreferredSize(new Dimension(454, 100));
-        tablePanel.add(tableScrollPane);
-
-        showReticle();
         initDataBindings();
     }
 
@@ -156,98 +172,51 @@ public class PackageVisionPanel extends JPanel {
         DoubleConverter doubleConverter =
                 new DoubleConverter(Configuration.get().getLengthDisplayFormat());
 
-        BeanProperty<Footprint, LengthUnit> footprintBeanProperty = BeanProperty.create("units");
+        BeanProperty<Outline, LengthUnit> outlineBeanProperty = BeanProperty.create("units");
         BeanProperty<JComboBox, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
-        AutoBinding<Footprint, LengthUnit, JComboBox, Object> autoBinding =
-                Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, footprint,
-                        footprintBeanProperty, unitsCombo, jComboBoxBeanProperty);
+        AutoBinding<Outline, LengthUnit, JComboBox, Object> autoBinding =
+                Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, pkg.getOutline(),
+                        outlineBeanProperty, unitsCombo, jComboBoxBeanProperty);
         autoBinding.bind();
         //
-        BeanProperty<Footprint, Double> footprintBeanProperty_1 = BeanProperty.create("bodyWidth");
+        BeanProperty<Outline, Double> outlineBeanProperty_1 = BeanProperty.create("bodyWidth");
         BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
-        AutoBinding<Footprint, Double, JTextField, String> autoBinding_1 =
-                Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, footprint,
-                        footprintBeanProperty_1, bodyWidthTf, jTextFieldBeanProperty);
+        AutoBinding<Outline, Double, JTextField, String> autoBinding_1 =
+                Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, pkg.getOutline(),
+                        outlineBeanProperty_1, bodyWidthTf, jTextFieldBeanProperty);
         autoBinding_1.setConverter(doubleConverter);
         autoBinding_1.bind();
         //
-        BeanProperty<Footprint, Double> footprintBeanProperty_2 = BeanProperty.create("bodyHeight");
+        BeanProperty<Outline, Double> outlineBeanProperty_2 = BeanProperty.create("bodyHeight");
         BeanProperty<JTextField, String> jTextFieldBeanProperty_1 = BeanProperty.create("text");
-        AutoBinding<Footprint, Double, JTextField, String> autoBinding_2 =
-                Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, footprint,
-                        footprintBeanProperty_2, bodyHeightTf, jTextFieldBeanProperty_1);
+        AutoBinding<Outline, Double, JTextField, String> autoBinding_2 =
+                Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, pkg.getOutline(),
+                        outlineBeanProperty_2, bodyHeightTf, jTextFieldBeanProperty_1);
         autoBinding_2.setConverter(doubleConverter);
         autoBinding_2.bind();
+        //
+        inputPartAlignmentModel.bind(this.pkg,"partAlignment", inputPartAlignmentCombo);
 
         ComponentDecorators.decorateWithAutoSelect(bodyWidthTf);
         ComponentDecorators.decorateWithAutoSelect(bodyHeightTf);
     }
 
-    private void showReticle() {
-        try {
-            Camera camera = Configuration.get().getMachine().getDefaultHead().getDefaultCamera();
-            CameraView cameraView = MainFrame.get().getCameraViews().getCameraView(camera);
-            if (cameraView == null) {
-                return;
-            }
-            cameraView.removeReticle(PackageVisionPanel.class.getName());
-            Reticle reticle = new FootprintReticle(footprint);
-            cameraView.setReticle(PackageVisionPanel.class.getName(), reticle);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void setMessage(String message) {
+        JPanel panel = new JPanel();
+        panel.add(new JLabel(message));
+        panelWizard.removeAll();
+        panelWizard.add(panel,BorderLayout.CENTER);
     }
 
-    private Pad getSelectedPad() {
-        int index = table.getSelectedRow();
-        if (index == -1) {
-            return null;
-        }
-        index = table.convertRowIndexToModel(index);
-        return tableModel.getPad(index);
+    public void setWizardPanel(Wizard wizard) {
+        panelWizard.add(wizard.getWizardPanel(),BorderLayout.CENTER);
+        wizard.setWizardContainer(PackageVisionPanel.this);
     }
 
-    public final Action newAction = new AbstractAction() {
-        {
-            putValue(SMALL_ICON, Icons.add);
-            putValue(NAME, "New Pad...");
-            putValue(SHORT_DESCRIPTION, "Create a new pad, specifying it's ID.");
-        }
+    @Override
+    public void wizardCompleted(Wizard wizard) {}
 
-        @Override
-        public void actionPerformed(ActionEvent arg0) {
-            String name;
-            while ((name = JOptionPane.showInputDialog(getTopLevelAncestor(),
-                    "Please enter a name for the new pad.")) != null) {
-                Pad pad = new Pad();
-                pad.setName(name);
-                footprint.addPad(pad);
-                tableModel.fireTableDataChanged();
-                Helpers.selectLastTableRow(table);
-                break;
-            }
-        }
-    };
+    @Override
+    public void wizardCancelled(Wizard wizard) {}
 
-    public final Action deleteAction = new AbstractAction() {
-        {
-            putValue(SMALL_ICON, Icons.delete);
-            putValue(NAME, "Delete Pad");
-            putValue(SHORT_DESCRIPTION, "Delete the currently selected pad.");
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent arg0) {
-            int ret = JOptionPane.showConfirmDialog(getTopLevelAncestor(),
-                    "Are you sure you want to delete " + getSelectedPad().getName() + "?",
-                    "Delete " + getSelectedPad().getName() + "?", JOptionPane.YES_NO_OPTION);
-            if (ret == JOptionPane.YES_OPTION) {
-                footprint.removePad(getSelectedPad());
-            }
-        }
-    };
-    private JTextField bodyWidthTf;
-    private JTextField bodyHeightTf;
-    private JComboBox unitsCombo;
 }

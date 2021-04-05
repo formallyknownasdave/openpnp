@@ -60,6 +60,13 @@ public interface PartAlignment extends Identifiable, Named, PropertySheetHolder 
      * @return
      */
     Wizard getPartConfigurationWizard(Part part);
+    /**
+     * Get a Wizard for configuring the PartAlignment instance properties for a specific
+     * Package.
+     * @param pkg
+     * @return
+     */
+    Wizard getConfigurationWizard(org.openpnp.model.Package pkg);
 
     public boolean canHandle(Part part);
 }

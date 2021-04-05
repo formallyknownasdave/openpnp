@@ -23,6 +23,7 @@ import org.openpnp.model.BoardLocation;
 import org.openpnp.model.Length;
 import org.openpnp.model.LengthUnit;
 import org.openpnp.model.Location;
+import org.openpnp.model.Package;
 import org.openpnp.model.Part;
 import org.openpnp.model.Footprint;
 import org.openpnp.spi.Camera;
@@ -515,11 +516,15 @@ public class ReferenceBottomVision implements PartAlignment {
         PartSettings partSettings = getPartSettings(part);
         try {
             partSettings.getPipeline()
-                        .setProperty("camera", VisionUtils.getBottomVisionCamera());
+                    .setProperty("camera", VisionUtils.getBottomVisionCamera());
         }
         catch (Exception e) {
         }
         return new ReferenceBottomVisionPartConfigurationWizard(this, part);
+    }
+
+    public Wizard getConfigurationWizard(org.openpnp.model.Package pkg) {
+        return null;
     }
     
     public enum PreRotateUsage {
@@ -528,6 +533,9 @@ public class ReferenceBottomVision implements PartAlignment {
     
     public enum MaxRotation {
         Adjust, Full
+    }
+    public String toString() {
+        return getClass().getSimpleName() + " " + getName();
     }
     
     @Root

@@ -72,12 +72,7 @@ import org.openpnp.machine.reference.feeder.ReferenceTrayFeeder;
 import org.openpnp.machine.reference.feeder.ReferenceTubeFeeder;
 import org.openpnp.machine.reference.feeder.SchultzFeeder;
 import org.openpnp.machine.reference.feeder.SlotSchultzFeeder;
-import org.openpnp.machine.reference.psh.ActuatorsPropertySheetHolder;
-import org.openpnp.machine.reference.psh.AxesPropertySheetHolder;
-import org.openpnp.machine.reference.psh.CamerasPropertySheetHolder;
-import org.openpnp.machine.reference.psh.DriversPropertySheetHolder;
-import org.openpnp.machine.reference.psh.NozzleTipsPropertySheetHolder;
-import org.openpnp.machine.reference.psh.SignalersPropertySheetHolder;
+import org.openpnp.machine.reference.psh.*;
 import org.openpnp.machine.reference.signaler.ActuatorSignaler;
 import org.openpnp.machine.reference.signaler.SoundSignaler;
 import org.openpnp.machine.reference.vision.ReferenceBottomVision;
@@ -288,10 +283,8 @@ public class ReferenceMachine extends AbstractMachine {
                 Arrays.asList(getPnpJobProcessor())));
 
         List<PropertySheetHolder> vision = new ArrayList<>();
-        for (PartAlignment alignment : getPartAlignments()) {
-            vision.add(alignment);
-        }
         vision.add(getFiducialLocator());
+        vision.add(new PartAlignmentPropertySheetHolder("Part Analysis", getPartAlignments(), null));
         children.add(new SimplePropertySheetHolder("Vision", vision));
         return children.toArray(new PropertySheetHolder[] {});
     }
@@ -405,6 +398,15 @@ public class ReferenceMachine extends AbstractMachine {
         List<Class<? extends MotionPlanner>> l = new ArrayList<>();
         l.add(NullMotionPlanner.class);
         l.add(ReferenceAdvancedMotionPlanner.class);
+        return l;
+    }
+
+    @Override
+    public List<Class<? extends PartAlignment>> getCompatiblePartAlignmentClasses() {
+        List<Class<? extends PartAlignment>> l = new ArrayList<>();
+        l.add(ReferenceBottomVision.class);
+        //l.add(ReferenceSimpleAlignment.class);
+        //l.add(ReferenceQFPAlignment.class);
         return l;
     }
 

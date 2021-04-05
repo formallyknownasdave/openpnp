@@ -217,7 +217,8 @@ public class PartsPanel extends JPanel implements WizardContainer {
                 if (part != null) {
                     tabbedPane.add("Settings", new JScrollPane(new PartSettingsPanel(part)));
 
-                    for (PartAlignment partAlignment : Configuration.get().getMachine().getPartAlignments()) {
+                    PartAlignment partAlignment = part.getPackage().getPartAlignment();
+                    if (partAlignment != null) {
                         Wizard wizard = partAlignment.getPartConfigurationWizard(part);
                         if (wizard != null) {
                             JPanel panel = new JPanel();

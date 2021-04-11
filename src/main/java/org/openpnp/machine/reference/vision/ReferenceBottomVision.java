@@ -40,8 +40,13 @@ import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementMap;
 import org.simpleframework.xml.Root;
 
-public class ReferenceBottomVision implements PartAlignment {
+public class ReferenceBottomVision extends AbstractModelObject implements PartAlignment {
 
+    @Attribute(required = false)
+    protected String id;
+
+    @Attribute(required = false)
+    protected String name;
 
     @Element(required = false)
     protected CvPipeline pipeline = createDefaultPipeline();
@@ -63,6 +68,12 @@ public class ReferenceBottomVision implements PartAlignment {
 
     @ElementMap(required = false)
     protected Map<String, PartSettings> partSettingsByPartId = new HashMap<>();
+
+    public ReferenceBottomVision() {
+        this.id = Configuration.createId("PAL");
+        this.name = getClass().getSimpleName();
+    }
+
 
     @Override
     public PartAlignmentOffset findOffsets(Part part, BoardLocation boardLocation,
@@ -429,17 +440,21 @@ public class ReferenceBottomVision implements PartAlignment {
 
     @Override
     public String getId() {
-        return null;
+        if (id == null) {
+           id = Configuration.createId("PAL");
+        }
+        return id;
     }
 
     @Override
     public String getName() {
-        return null;
+        return name;
     }
 
     @Override
     public void setName(String name) {
-
+        this.name = name;
+        firePropertyChange("name", null, name);
     }
 
     public CvPipeline getPipeline() {
@@ -492,7 +507,7 @@ public class ReferenceBottomVision implements PartAlignment {
     
     @Override
     public String getPropertySheetHolderTitle() {
-        return "Bottom Vision";
+        return getClass().getSimpleName() + " " + getName();
     }
 
     @Override

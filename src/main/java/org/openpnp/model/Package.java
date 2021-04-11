@@ -52,12 +52,8 @@ public class Package extends AbstractModelObject implements Identifiable {
     @Attribute(required = false)
     private double placeBlowOffLevel;
 
-    @Deprecated
     @Element(required = false)
     private Footprint footprint;
-
-    @Element(required = false)
-    private Outline outline;
 
     @Attribute(required = false)
     private String partAlignmentId;
@@ -141,26 +137,14 @@ public class Package extends AbstractModelObject implements Identifiable {
         return pickVacuumLevel;
     }
 
-    @Deprecated
     public Footprint getFootprint() {
         return footprint;
     }
 
-    @Deprecated
     public void setFootprint(Footprint footprint) {
         Object oldValue = this.footprint;
         this.footprint = footprint;
         firePropertyChange("footprint", oldValue, footprint);
-    }
-
-    public Outline getOutline() {
-        return outline;
-    }
-
-    public void setOutline(Outline outline) {
-        Object oldValue = this.outline;
-        this.outline = outline;
-        firePropertyChange("outline", oldValue, footprint);
     }
 
     public PartAlignment getPartAlignment() {

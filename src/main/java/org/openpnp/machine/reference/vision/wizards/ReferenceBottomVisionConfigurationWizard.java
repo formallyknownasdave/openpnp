@@ -42,10 +42,27 @@ public class ReferenceBottomVisionConfigurationWizard extends AbstractConfigurat
     private JTextField textFieldMaxVisionPasses;
     private JTextField textFieldMaxLinearOffset;
     private JTextField textFieldMaxAngularOffset;
+    private JTextField textFieldName;
 
     
     public ReferenceBottomVisionConfigurationWizard(ReferenceBottomVision bottomVision) {
         this.bottomVision = bottomVision;
+
+        JPanel panelProperties = new JPanel();
+        panelProperties.setBorder(new TitledBorder(null, "Properties", TitledBorder.LEADING, TitledBorder.TOP,
+                null, null));
+        contentPanel.add(panelProperties);
+        panelProperties.setLayout(new FormLayout(new ColumnSpec[] {
+                FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("right:default"),
+                FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,},
+                new RowSpec[] {
+                        FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,}));
+
+        JLabel lblName = new JLabel("Name");
+        panelProperties.add(lblName, "2, 2");
+
+        textFieldName = new JTextField();
+        panelProperties.add(textFieldName, "4, 2");
 
         JPanel panel = new JPanel();
         panel.setBorder(new TitledBorder(null, "General", TitledBorder.LEADING, TitledBorder.TOP,
@@ -186,11 +203,13 @@ public class ReferenceBottomVisionConfigurationWizard extends AbstractConfigurat
 
     @Override
     public String getWizardName() {
-        return "ReferenceBottomVision";
+        return getClass().getSimpleName();
     }
     
     @Override
     public void createBindings() {
+        addWrappedBinding(bottomVision, "name", textFieldName, "text");
+
         addWrappedBinding(bottomVision, "enabled", enabledCheckbox, "selected");
         addWrappedBinding(bottomVision, "preRotate", preRotCheckbox, "selected");
         

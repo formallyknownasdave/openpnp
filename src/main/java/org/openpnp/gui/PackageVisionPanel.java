@@ -172,25 +172,25 @@ public class PackageVisionPanel extends JPanel implements WizardContainer {
         DoubleConverter doubleConverter =
                 new DoubleConverter(Configuration.get().getLengthDisplayFormat());
 
-        BeanProperty<Outline, LengthUnit> outlineBeanProperty = BeanProperty.create("units");
+        BeanProperty<Footprint, LengthUnit> outlineBeanProperty = BeanProperty.create("units");
         BeanProperty<JComboBox, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
-        AutoBinding<Outline, LengthUnit, JComboBox, Object> autoBinding =
-                Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, pkg.getOutline(),
+        AutoBinding<Footprint, LengthUnit, JComboBox, Object> autoBinding =
+                Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, pkg.getFootprint(),
                         outlineBeanProperty, unitsCombo, jComboBoxBeanProperty);
         autoBinding.bind();
         //
-        BeanProperty<Outline, Double> outlineBeanProperty_1 = BeanProperty.create("bodyWidth");
+        BeanProperty<Footprint, Double> outlineBeanProperty_1 = BeanProperty.create("bodyWidth");
         BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
-        AutoBinding<Outline, Double, JTextField, String> autoBinding_1 =
-                Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, pkg.getOutline(),
+        AutoBinding<Footprint, Double, JTextField, String> autoBinding_1 =
+                Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, pkg.getFootprint(),
                         outlineBeanProperty_1, bodyWidthTf, jTextFieldBeanProperty);
         autoBinding_1.setConverter(doubleConverter);
         autoBinding_1.bind();
         //
-        BeanProperty<Outline, Double> outlineBeanProperty_2 = BeanProperty.create("bodyHeight");
+        BeanProperty<Footprint, Double> outlineBeanProperty_2 = BeanProperty.create("bodyHeight");
         BeanProperty<JTextField, String> jTextFieldBeanProperty_1 = BeanProperty.create("text");
-        AutoBinding<Outline, Double, JTextField, String> autoBinding_2 =
-                Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, pkg.getOutline(),
+        AutoBinding<Footprint, Double, JTextField, String> autoBinding_2 =
+                Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, pkg.getFootprint(),
                         outlineBeanProperty_2, bodyHeightTf, jTextFieldBeanProperty_1);
         autoBinding_2.setConverter(doubleConverter);
         autoBinding_2.bind();

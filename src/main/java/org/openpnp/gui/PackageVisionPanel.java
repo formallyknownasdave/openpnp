@@ -51,11 +51,16 @@ import org.openpnp.gui.components.CameraView;
 import org.openpnp.gui.components.ComponentDecorators;
 import org.openpnp.gui.components.reticle.FootprintReticle;
 import org.openpnp.gui.components.reticle.Reticle;
-import org.openpnp.gui.support.*;
 import org.openpnp.gui.tablemodel.FootprintTableModel;
-import org.openpnp.model.*;
+import org.openpnp.model.Configuration;
+import org.openpnp.model.LengthUnit;
+import org.openpnp.model.Footprint;
 import org.openpnp.model.Footprint.Pad;
 import org.openpnp.model.Package;
+import org.openpnp.gui.support.WizardContainer;
+import org.openpnp.gui.support.Wizard;
+import org.openpnp.gui.support.ModelComboBoxModel;
+import org.openpnp.gui.support.DoubleConverter;
 import org.openpnp.spi.Camera;
 
 import com.jgoodies.forms.layout.ColumnSpec;

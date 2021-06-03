@@ -405,8 +405,6 @@ public class ReferenceMachine extends AbstractMachine {
     public List<Class<? extends PartAlignment>> getCompatiblePartAlignmentClasses() {
         List<Class<? extends PartAlignment>> l = new ArrayList<>();
         l.add(ReferenceBottomVision.class);
-        //l.add(ReferenceSimpleAlignment.class);
-        //l.add(ReferenceQFPAlignment.class);
         return l;
     }
 

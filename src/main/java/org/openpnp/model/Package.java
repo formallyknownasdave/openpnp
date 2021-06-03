@@ -76,6 +76,12 @@ public class Package extends AbstractModelObject implements Identifiable {
             @Override
             public void configurationLoaded(Configuration configuration) throws Exception {
                 partAlignment = (PartAlignment) configuration.getMachine().getPartAlignment(partAlignmentId);
+                if (partAlignmentId == null) {
+                    partAlignment = configuration.getMachine().getPartAlignments().get(0);
+                    if (partAlignment != null) {
+                        partAlignmentId = partAlignment.getId();
+                    }
+                }
             }
         });
     }

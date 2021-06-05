@@ -22,6 +22,7 @@ import org.openpnp.gui.MainFrame;
 import org.openpnp.gui.support.Icons;
 import org.openpnp.gui.support.PropertySheetWizardAdapter;
 import org.openpnp.gui.support.Wizard;
+import org.openpnp.machine.reference.vision.ReferenceNozzleTipLocator;
 import org.openpnp.machine.reference.wizards.ReferenceNozzleTipCalibrationWizard;
 import org.openpnp.machine.reference.wizards.ReferenceNozzleTipConfigurationWizard;
 import org.openpnp.machine.reference.wizards.ReferenceNozzleTipPartDetectionWizard;
@@ -30,11 +31,7 @@ import org.openpnp.model.Configuration;
 import org.openpnp.model.Length;
 import org.openpnp.model.LengthUnit;
 import org.openpnp.model.Location;
-import org.openpnp.spi.Camera;
-import org.openpnp.spi.Head;
-import org.openpnp.spi.Nozzle;
-import org.openpnp.spi.NozzleTip;
-import org.openpnp.spi.PropertySheetHolder;
+import org.openpnp.spi.*;
 import org.openpnp.spi.base.AbstractNozzleTip;
 import org.openpnp.util.ImageUtils;
 import org.openpnp.util.LogUtils;
@@ -161,6 +158,11 @@ public class ReferenceNozzleTip extends AbstractNozzleTip {
 
     @Element(required = false)
     private Length maxPartHeight = new Length(10, LengthUnit.Millimeters);
+
+    public ReferenceNozzleTipLocator nozzleTipLocator;
+
+    @Attribute(required = false)
+    private String nozzleTipLocatorId;
 
     @Element(required = false)
     private ReferenceNozzleTipCalibration calibration = new ReferenceNozzleTipCalibration();
@@ -331,6 +333,8 @@ public class ReferenceNozzleTip extends AbstractNozzleTip {
                 new PropertySheetWizardAdapter(new ReferenceNozzleTipCalibrationWizard(this), "Calibration")
                 };
     }
+
+    public NozzleTipLocator getLocator() { return nozzleTipLocator; }
 
     public Length getMaxPartHeight() {
         return maxPartHeight;

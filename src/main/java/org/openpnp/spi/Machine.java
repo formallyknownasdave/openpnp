@@ -181,6 +181,8 @@ public interface Machine extends WizardConfigurable, PropertySheetHolder, Closea
 
     public List<Class<? extends MotionPlanner>> getCompatibleMotionPlannerClasses();
 
+    public List<Class<? extends PartAlignment>> getCompatiblePartAlignmentClasses();
+
     public void addAxis(Axis axis) throws Exception;
 
     public void removeAxis(Axis axis);
@@ -317,6 +319,14 @@ public interface Machine extends WizardConfigurable, PropertySheetHolder, Closea
 
     public List<PartAlignment> getPartAlignments();
 
+    public void addPartAlignment(PartAlignment partAlignment) throws Exception;
+
+    public void removePartAlignment(PartAlignment partAlignment);
+
+    public PartAlignment getPartAlignment(String id);
+
+    public PartAlignment getPartAlignmentByName(String name);
+
     public FiducialLocator getFiducialLocator();
 
     public Location getDiscardLocation();
@@ -343,6 +353,22 @@ public interface Machine extends WizardConfigurable, PropertySheetHolder, Closea
     public NozzleTip getNozzleTip(String id);
     
     public NozzleTip getNozzleTipByName(String name);
+
+    /**
+     * Get a list of the NozzleTipLocators.
+     *
+     * @return
+     */
+
+    public List<NozzleTipLocator> getNozzleTipLocators();
+
+    public void addNozzleTipLocator(NozzleTipLocator nozzleTip) throws Exception;
+
+    public void removeNozzleTipLocator(NozzleTipLocator nozzleTip);
+
+    public NozzleTipLocator getNozzleTipLocator(String id);
+
+    public NozzleTipLocator getNozzleTipLocatorByName(String name);
 
     /**
      * @return True if the tool in machine controls should be auto-selected based on targeted user action.

@@ -407,6 +407,13 @@ public class ReferenceMachine extends AbstractMachine {
         return l;
     }
 
+    @Override
+    public List<Class<? extends PartAlignment>> getCompatiblePartAlignmentClasses() {
+        List<Class<? extends PartAlignment>> l = new ArrayList<>();
+        l.add(ReferenceBottomVision.class);
+        return l;
+    }
+
     private List<Class<? extends PartAlignment>> registeredAlignmentClasses = new ArrayList<>();
 
     protected MotionPlanner mootionPlanner;

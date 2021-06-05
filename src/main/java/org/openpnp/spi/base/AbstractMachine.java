@@ -23,19 +23,8 @@ import org.openpnp.model.AbstractModelObject;
 import org.openpnp.model.LengthUnit;
 import org.openpnp.model.Location;
 import org.openpnp.model.Solutions;
-import org.openpnp.spi.Actuator;
-import org.openpnp.spi.Axis;
-import org.openpnp.spi.Camera;
-import org.openpnp.spi.Driver;
-import org.openpnp.spi.Feeder;
-import org.openpnp.spi.Head;
-import org.openpnp.spi.HeadMountable;
-import org.openpnp.spi.Machine;
-import org.openpnp.spi.MachineListener;
+import org.openpnp.spi.*;
 import org.openpnp.spi.MotionPlanner.CompletionType;
-import org.openpnp.spi.NozzleTip;
-import org.openpnp.spi.PartAlignment;
-import org.openpnp.spi.Signaler;
 import org.openpnp.util.IdentifiableList;
 import org.pmw.tinylog.Logger;
 import org.simpleframework.xml.Attribute;
@@ -96,6 +85,9 @@ public abstract class AbstractMachine extends AbstractModelObject implements Mac
     
     @ElementList(required = false)
     protected IdentifiableList<NozzleTip> nozzleTips = new IdentifiableList<>();
+
+    @ElementList(required = false)
+    protected IdentifiableList<NozzleTipLocator> nozzleTipLocators = new IdentifiableList<>();
 
     protected Set<MachineListener> listeners = Collections.synchronizedSet(new HashSet<>());
 
@@ -252,6 +244,30 @@ public abstract class AbstractMachine extends AbstractModelObject implements Mac
         return Collections.unmodifiableList(partAlignments);
     }
 
+    public void addPartAlignment(PartAlignment partAlignment) throws Exception {
+        partAlignments.add(partAlignment);
+        fireIndexedPropertyChange("partAlignments", partAlignments.size() - 1, null, partAlignment);
+    }
+
+    public void removePartAlignment(PartAlignment partAlignment) {
+        int index = partAlignments.indexOf(partAlignment);
+        if (partAlignments.remove(partAlignment)) {
+            fireIndexedPropertyChange("partAlignments", index, partAlignment, null);
+        }
+    }
+
+    public PartAlignment getPartAlignment(String id) {
+        return partAlignments.get(id);
+    }
+
+    public PartAlignment getPartAlignmentByName(String name) {
+        for (PartAlignment partAlignment : partAlignments) {
+            if (partAlignment.getName().equals(name)) {
+                return partAlignment;
+            }
+        }
+        return null;
+    }
     @Override
     public List<Actuator> getActuators() {
         return Collections.unmodifiableList(actuators);
@@ -714,6 +730,35 @@ public abstract class AbstractMachine extends AbstractModelObject implements Mac
         for (NozzleTip nozzleTip : nozzleTips) {
             if (nozzleTip.getName().equals(name)) {
                 return nozzleTip;
+            }
+        }
+        return null;
+    }
+
+    public List<NozzleTipLocator> getNozzleTipLocators() {
+        return Collections.unmodifiableList(nozzleTipLocators);
+    }
+
+    public void addNozzleTipLocator(NozzleTipLocator nozzleTipLocator) throws Exception {
+        nozzleTipLocators.add(nozzleTipLocator);
+        fireIndexedPropertyChange("nozzleTipLocators", nozzleTipLocators.size() - 1, null, nozzleTipLocator);
+    }
+
+    public void removeNozzleTipLocator(NozzleTipLocator nozzleTipLocator) {
+        int index = nozzleTipLocators.indexOf(nozzleTipLocator);
+        if (nozzleTipLocators.remove(nozzleTipLocator)) {
+            fireIndexedPropertyChange("nozzleTipLocators", index, nozzleTipLocator, null);
+        }
+    }
+
+    public NozzleTipLocator getNozzleTipLocator(String id) {
+        return nozzleTipLocators.get(id);
+    }
+
+    public NozzleTipLocator getNozzleTipLocatorByName(String name) {
+        for (NozzleTipLocator nozzleTipLocator : nozzleTipLocators) {
+            if (nozzleTipLocator.getName().equals(name)) {
+                return nozzleTipLocator;
             }
         }
         return null;

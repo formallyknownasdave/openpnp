@@ -26,10 +26,7 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.math3.linear.LUDecomposition;
-import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.SingularValueDecomposition;
+import org.apache.commons.math3.linear.*;
 import org.openpnp.model.Board.Side;
 import org.openpnp.model.BoardLocation;
 import org.openpnp.model.Length;
@@ -651,5 +648,35 @@ public class Utils2D {
         results.add(maxA);
         results.add(maxB);
         return results;
+    }
+    public static List<Double> polynomialRegression(List<Double> x, List<Double> y, int degree) {
+        DecompositionSolver solver = null;
+        int tmpDegree = degree + 1;
+        while (true) {
+            RealMatrix vandermonde = MatrixUtils.createRealMatrix(x.size(),tmpDegree);
+            for (int i = 0; i < x.size(); i++) {
+                for (int j = 0; j <= degree; j++) {
+                    vandermonde.setEntry(i,j,Math.pow(x.get(i), j));
+                }
+            }
+            QRDecomposition qr = new QRDecomposition(vandermonde);
+            solver = qr.getSolver();
+            if (solver.isNonSingular()) {
+                break;
+            }
+            tmpDegree -= 1;
+            Logger.warn("polynomialRegression: lowering degree to {}",tmpDegree);
+        }
+
+        RealMatrix yMatrix = MatrixUtils.createRealMatrix(y.size(),1);
+        yMatrix.setColumn(0,y.stream().mapToDouble(d -> d).toArray());
+        RealMatrix result = solver.solve(yMatrix);
+        Logger.warn("polynomialRegression: col: {}, row: {}", result.getColumnDimension(),result.getRowDimension());
+        double[] row = result.getColumn(0);
+        ArrayList<Double> coeff = new ArrayList<>();
+        for(double d : row) {
+            coeff.add(d);
+        }
+        return coeff;
     }
 }

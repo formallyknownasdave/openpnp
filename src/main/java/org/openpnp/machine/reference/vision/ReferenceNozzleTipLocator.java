@@ -57,7 +57,8 @@ public class ReferenceNozzleTipLocator extends AbstractNozzleTipLocator {
                     OpenCvUtils.toBufferedImage(pipeline.getWorkingImage()), duration);
         }
     }
-    public NozzleTipLocator.NozzleTipAlignmentOffset findOffsets(NozzleTip tip, Location location, Nozzle nozzle) throws Exception {
+    public NozzleTipLocator.NozzleTipAlignmentOffset
+    findOffsets(NozzleTip tip, Location location, Nozzle nozzle) throws Exception {
         if (nozzle == null) {
             throw new Exception("No nozzle.");
         }

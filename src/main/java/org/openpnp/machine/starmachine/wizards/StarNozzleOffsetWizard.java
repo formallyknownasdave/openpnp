@@ -1,9 +1,6 @@
 package org.openpnp.machine.starmachine.wizards;
 
-import com.jgoodies.forms.layout.ColumnSpec;
-import com.jgoodies.forms.layout.FormLayout;
-import com.jgoodies.forms.layout.FormSpecs;
-import com.jgoodies.forms.layout.RowSpec;
+import com.jgoodies.forms.layout.*;
 import org.jdesktop.beansbinding.AutoBinding;
 import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.jdesktop.beansbinding.BeanProperty;
@@ -11,6 +8,7 @@ import org.jdesktop.beansbinding.Bindings;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.openpnp.gui.JobPanel;
 import org.openpnp.gui.MainFrame;
 import org.openpnp.gui.components.ComponentDecorators;
 import org.openpnp.gui.support.*;
@@ -26,6 +24,8 @@ import org.openpnp.model.Motion;
 import org.openpnp.model.Point;
 import org.openpnp.spi.Camera;
 import org.openpnp.spi.HeadMountable;
+import org.openpnp.spi.Machine;
+import org.openpnp.spi.MachineListener;
 import org.openpnp.util.*;
 import org.openpnp.vision.FluentCv;
 import org.pmw.tinylog.Logger;
@@ -47,18 +47,14 @@ public class StarNozzleOffsetWizard extends AbstractConfigurationWizard {
 
     private JComboBox<CameraItem> camerasComboBox;
 
-    private JTextField nozzleLocationX, nozzleLocationY, nozzleLocationZ, nozzleLocationD;
-    private JTextField nozzleOffsetLocationX, nozzleOffsetLocationY, nozzleOffsetLocationZ;
+    private JTextField nozzleOffsetLocationX, nozzleOffsetLocationY, nozzleOffsetLocationZ, nozzleOffsetLocationD;
     private JCheckBox chckbxIncludeZ;
-    private JLabel nozzleLocationZLabel;
-    private JLabel nozzleOffsetZLabel;
 
     private StarNozzle nozzle;
-    private MutableLocationProxy nozzleMarkLocation, nozzleOffsetLocation;
+    private MutableLocationProxy nozzleOffsetLocation;
 
     public StarNozzleOffsetWizard(StarNozzle nozzle) {
         this.nozzle = nozzle;
-        this.nozzleMarkLocation = new MutableLocationProxy();
         this.nozzleOffsetLocation = new MutableLocationProxy();
 
         JPanel visionPanel = new JPanel();
@@ -71,47 +67,11 @@ public class StarNozzleOffsetWizard extends AbstractConfigurationWizard {
                         FormSpecs.RELATED_GAP_ROWSPEC,
                         FormSpecs.DEFAULT_ROWSPEC,
                         FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
-                        FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC,
                         FormSpecs.DEFAULT_ROWSPEC,})
         );
 
-
         JLabel step1Label = new JLabel("Select the up looking camera to view the nozzle.");
-        visionPanel.add(step1Label, "2, 7");
+        visionPanel.add(step1Label, "2, 2");
 
         // We need to know through which camera we are doing the wizard, only relevant if there is more than one
         camerasComboBox = new JComboBox<>();
@@ -125,12 +85,14 @@ public class StarNozzleOffsetWizard extends AbstractConfigurationWizard {
             camerasComboBox.setSelectedIndex(0);
         }
 
-        visionPanel.add(camerasComboBox, "2, 9");
+        visionPanel.add(camerasComboBox, "2, 4");
 
         JPanel nozzlePositionPanel = new JPanel();
-        nozzlePositionPanel.setBorder(new TitledBorder(null, "Nozzle position", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        nozzlePositionPanel.setBorder(new TitledBorder(null, "2. Capture Rough Nozzle Offset", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
         nozzlePositionPanel.setLayout(new FormLayout(new ColumnSpec[] {
+                FormSpecs.RELATED_GAP_COLSPEC,
+                FormSpecs.DEFAULT_COLSPEC,
                 FormSpecs.RELATED_GAP_COLSPEC,
                 FormSpecs.DEFAULT_COLSPEC,
                 FormSpecs.RELATED_GAP_COLSPEC,
@@ -149,58 +111,81 @@ public class StarNozzleOffsetWizard extends AbstractConfigurationWizard {
                         FormSpecs.RELATED_GAP_ROWSPEC,
                         FormSpecs.DEFAULT_ROWSPEC,
                         FormSpecs.RELATED_GAP_ROWSPEC,
+                        FormSpecs.DEFAULT_ROWSPEC,
+                        FormSpecs.RELATED_GAP_ROWSPEC,
                         FormSpecs.DEFAULT_ROWSPEC,})
         );
 
-        JLabel nozzleLocationXLabel = new JLabel("X");
-        nozzlePositionPanel.add(nozzleLocationXLabel, "2, 2");
+        CellConstraints cc = new CellConstraints();
+        JLabel step2Label = new JLabel("Jog the nozzle to the selected down camera, then rotate the star axis until the correct nozzle is pointed at the camera.");
+        nozzlePositionPanel.add(step2Label, cc.xywh(2, 2, 9, 1));
 
-        JLabel nozzleLocationYLabel = new JLabel("Y");
-        nozzlePositionPanel.add(nozzleLocationYLabel, "4, 2");
+        JLabel nozzleOffsetLocationXLabel = new JLabel("X");
+        nozzlePositionPanel.add(nozzleOffsetLocationXLabel, "2, 4");
 
-        JLabel nozzleLocationZLabel = new JLabel("Z");
-        nozzlePositionPanel.add(nozzleLocationZLabel, "6, 2");
+        JLabel nozzleOffsetLocationYLabel = new JLabel("Y");
+        nozzlePositionPanel.add(nozzleOffsetLocationYLabel, "4, 4");
 
-        nozzleLocationX = new JTextField();
-        nozzlePositionPanel.add(nozzleLocationX, "2, 4");
-        nozzleLocationX.setColumns(10);
+        JLabel nozzleOffsetLocationZLabel = new JLabel("Z");
+        nozzlePositionPanel.add(nozzleOffsetLocationZLabel, "6, 4");
 
-        nozzleLocationY = new JTextField();
-        nozzlePositionPanel.add(nozzleLocationY, "4, 4");
-        nozzleLocationY.setColumns(10);
+        nozzleOffsetLocationX = new JTextField();
+        nozzlePositionPanel.add(nozzleOffsetLocationX, "2, 6");
+        nozzleOffsetLocationX.setColumns(10);
 
-        nozzleLocationZ = new JTextField();
-        nozzlePositionPanel.add(nozzleLocationZ, "6, 4");
-        nozzleLocationZ.setColumns(10);
+        nozzleOffsetLocationY = new JTextField();
+        nozzlePositionPanel.add(nozzleOffsetLocationY, "4, 6");
+        nozzleOffsetLocationY.setColumns(10);
+
+        nozzleOffsetLocationZ = new JTextField();
+        nozzlePositionPanel.add(nozzleOffsetLocationZ, "6, 6");
+        nozzleOffsetLocationZ.setColumns(10);
 
         JButton buttonCenterTool = new JButton(positionToolAction);
         buttonCenterTool.setHideActionText(true);
-        nozzlePositionPanel.add(buttonCenterTool,"8,4");
+        nozzlePositionPanel.add(buttonCenterTool,"8,6");
 
-        JLabel nozzleLocationDLabel = new JLabel("D");
-        nozzlePositionPanel.add(nozzleLocationDLabel, "4, 6");
+        JButton captureOffsetTool = new JButton(captureOffsetAction);
+        captureOffsetTool.setHideActionText(true);
+        nozzlePositionPanel.add(captureOffsetTool,"10,6");
 
-        nozzleLocationD = new JTextField();
-        nozzlePositionPanel.add(nozzleLocationD, "4, 8");
-        nozzleLocationD.setColumns(10);
+        JLabel nozzleOffsetLocationDLabel = new JLabel("D");
+        nozzlePositionPanel.add(nozzleOffsetLocationDLabel, "4, 8");
+
+        nozzleOffsetLocationD = new JTextField();
+        nozzlePositionPanel.add(nozzleOffsetLocationD, "4, 10");
+        nozzleOffsetLocationD.setColumns(10);
 
         JButton counterclockwiseButton = new JButton(dNegativeJogAction);
         counterclockwiseButton.setHideActionText(true);
-        nozzlePositionPanel.add(counterclockwiseButton, "2, 8"); //$NON-NLS-1$
+        nozzlePositionPanel.add(counterclockwiseButton, "2, 10"); //$NON-NLS-1$
 
         JButton clockwiseButton = new JButton(dPositiveJogAction);
         clockwiseButton.setHideActionText(true);
-        nozzlePositionPanel.add(clockwiseButton, "6, 8"); //$NON-NLS-1$
+        nozzlePositionPanel.add(clockwiseButton, "6, 10"); //$NON-NLS-1$
 
-        visionPanel.add(nozzlePositionPanel, "2, 25");
 
-        contentPanel.add(visionPanel);
+        JPanel testPipelinePanel = new JPanel();
+        testPipelinePanel.setBorder(new TitledBorder(null, "3. Test Nozzle Recognition Pipeline", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+
+        JButton testButton = new JButton("Test Pipeline");
+        testButton.setAction(testPipelineAction);
+        testPipelinePanel.add(testButton);
+
+        JPanel calibratePanel = new JPanel();
+        calibratePanel.setBorder(new TitledBorder(null, "4. Calibrate", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
         JButton calibrateButton = new JButton("Calibrate");
         calibrateButton.setAction(calibrateAction);
-        visionPanel.add(calibrateButton, "2, 27");
+        calibratePanel.add(calibrateButton);
 
-        initDataBindings();
+        contentPanel.add(visionPanel);
+        contentPanel.add(nozzlePositionPanel);
+        contentPanel.add(testPipelinePanel);
+        contentPanel.add(calibratePanel);
+
+
+        createBindings();
     }
 
 
@@ -225,33 +210,34 @@ public class StarNozzleOffsetWizard extends AbstractConfigurationWizard {
             });
         }
     };
-
+    public Action captureOffsetAction = new AbstractAction("Capture Offset", Icons.captureCamera) {
+        {
+            putValue(Action.SHORT_DESCRIPTION,
+                    "Capture the nozzle offset from where camera is centered on.");
+        }
+        @Override
+        public void actionPerformed(ActionEvent arg0) {
+            CameraItem selectedCameraItem = (CameraItem) camerasComboBox.getSelectedItem();
+            if (selectedCameraItem != null) {
+                LengthConverter lengthConverter = new LengthConverter();
+                Camera currentCamera = selectedCameraItem.getCamera();
+                Location cameraLocation = currentCamera.getLocation();
+                // Subtract
+                Location headOffsets = cameraLocation.subtract(nozzle.getHeadOffsets());
+                nozzleOffsetLocation.setLocation(headOffsets.derive(nozzle.getHeadOffsets(), false, false, true, false));
+            }
+        }
+    };
     private Action calibrateAction = new AbstractAction("Calibrate") {
         @Override
         public void actionPerformed(ActionEvent e) {
             calibrate();
         }
     };
-
-    private Action applyNozzleOffsetAction = new AbstractAction("Calculate nozzle offset") {
+    private Action testPipelineAction = new AbstractAction("Test Pipeline") {
         @Override
         public void actionPerformed(ActionEvent e) {
-            CameraItem selectedCameraItem = (CameraItem) camerasComboBox.getSelectedItem();
-
-            if(selectedCameraItem != null) {
-                LengthConverter lengthConverter = new LengthConverter();
-                Camera currentCamera = selectedCameraItem.getCamera();
-                Location cameraLocation = currentCamera.getLocation();
-                Location headOffsets = cameraLocation.subtract(nozzleMarkLocation.getLocation());
-                if (! chckbxIncludeZ.isSelected()) {
-                    // keep the old Z offset
-                    headOffsets = headOffsets.derive(nozzle.getHeadOffsets(), false, false, true, false);
-                }
-                nozzleOffsetLocationX.setText(lengthConverter.convertForward(headOffsets.getLengthX()));
-                nozzleOffsetLocationY.setText(lengthConverter.convertForward(headOffsets.getLengthY()));
-                nozzleOffsetLocationZ.setText(lengthConverter.convertForward(headOffsets.getLengthZ()));
-                Logger.info("Nozzle offset wizard set head offset to location: " + headOffsets.toString());
-            }
+            testPipeline();
         }
     };
     private Action positionToolAction = new AbstractAction("Position Tool", Icons.centerTool) {
@@ -277,41 +263,64 @@ public class StarNozzleOffsetWizard extends AbstractConfigurationWizard {
     public void createBindings() {
         LengthConverter lengthConverter = new LengthConverter();
 
-        nozzleMarkLocation.setLocation(new Location(nozzle.getHeadOffsets().getUnits()));
-        /*addWrappedBinding(nozzleMarkLocation, "lengthX", nozzleMarkLocationX, "text", lengthConverter);
-        addWrappedBinding(nozzleMarkLocation, "lengthY", nozzleMarkLocationY, "text", lengthConverter);
-        addWrappedBinding(nozzleMarkLocation, "lengthZ", nozzleMarkLocationZ, "text", lengthConverter);
-*/
-        MutableLocationProxy headOffsets = new MutableLocationProxy();
-        bind(UpdateStrategy.READ_WRITE, nozzle, "headOffsets", nozzleOffsetLocation, "location");
+        nozzleOffsetLocation.setLocation(nozzle.getHeadOffsets());
+        //MutableLocationProxy headOffsets = new MutableLocationProxy();
+        //bind(UpdateStrategy.READ_WRITE, nozzle, "headOffsets", nozzleOffsetLocation, "location");
         addWrappedBinding(nozzleOffsetLocation, "lengthX", nozzleOffsetLocationX, "text", lengthConverter);
         addWrappedBinding(nozzleOffsetLocation, "lengthY", nozzleOffsetLocationY, "text", lengthConverter);
         addWrappedBinding(nozzleOffsetLocation, "lengthZ", nozzleOffsetLocationZ, "text", lengthConverter);
-/*
-        ComponentDecorators.decorateWithAutoSelectAndLengthConversion(nozzleMarkLocationX);
-        ComponentDecorators.decorateWithAutoSelectAndLengthConversion(nozzleMarkLocationY);
-        ComponentDecorators.decorateWithAutoSelectAndLengthConversion(nozzleMarkLocationZ);*/
-        ComponentDecorators.decorateWithAutoSelectAndLengthConversion(nozzleOffsetLocationX);
-        ComponentDecorators.decorateWithAutoSelectAndLengthConversion(nozzleOffsetLocationY);
-        ComponentDecorators.decorateWithAutoSelectAndLengthConversion(nozzleOffsetLocationZ);
-    }
-    protected void initDataBindings() {
-        BeanProperty<JCheckBox, Boolean> jCheckBoxBeanProperty = BeanProperty.create("selected");
-        BeanProperty<JLabel, Boolean> jLabelBeanProperty = BeanProperty.create("visible");
-        //AutoBinding<JCheckBox, Boolean, JLabel, Boolean> autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ, chckbxIncludeZ, jCheckBoxBeanProperty, nozzleMarkLocationZLabel, jLabelBeanProperty);
-        //autoBinding.bind();
-        //
-        //BeanProperty<JTextField, Boolean> jTextFieldBeanProperty = BeanProperty.create("visible");
-        //AutoBinding<JCheckBox, Boolean, JTextField, Boolean> autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ, chckbxIncludeZ, jCheckBoxBeanProperty, nozzleMarkLocationZ, jTextFieldBeanProperty);
-        //autoBinding_1.bind();
-        //
-        //AutoBinding<JCheckBox, Boolean, JLabel, Boolean> autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ, chckbxIncludeZ, jCheckBoxBeanProperty, nozzleOffsetZLabel, jLabelBeanProperty);
-        //autoBinding_2.bind();
-        //
-        //AutoBinding<JCheckBox, Boolean, JTextField, Boolean> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ, chckbxIncludeZ, jCheckBoxBeanProperty, nozzleOffsetLocationZ, jTextFieldBeanProperty);
-        //autoBinding_5.bind();
-    }
 
+        /*ComponentDecorators.decorateWithAutoSelectAndLengthConversion(nozzleOffsetLocationX);
+        ComponentDecorators.decorateWithAutoSelectAndLengthConversion(nozzleOffsetLocationY);
+        ComponentDecorators.decorateWithAutoSelectAndLengthConversion(nozzleOffsetLocationZ);*/
+    }
+    private void testPipeline() {
+        UiUtils.submitUiMachineTask(() -> {
+            StarNozzleTipCalibration calibration = nozzle.getNozzleTip().getCalibration();
+            CameraItem selectedCameraItem = (CameraItem) camerasComboBox.getSelectedItem();
+            Camera camera = selectedCameraItem.getCamera();
+            StarNozzleTipCalibration.RunoutCompensation model;
+
+            model = calibration.generateModel(nozzle, selectedCameraItem.getCamera(), false, 0, 0,3, 3, StarNozzleTipCalibration.RunoutCompensationAlgorithm.Model);
+
+            //show result from calibration in camera view, but only if GUI is present (not so in UnitTests).
+            MainFrame mainFrame = MainFrame.get();
+            if (mainFrame != null) {
+
+                // Draw the result onto the pipeline image.
+                Mat image = OpenCvUtils.toMat(camera.capture());
+
+                /*if (Logger.getLevel() == org.pmw.tinylog.Level.DEBUG || Logger.getLevel() == org.pmw.tinylog.Level.TRACE) {
+                    File file = Configuration.get().createResourceFile(getClass(), "push-pull-feeder", ".png");
+                    Imgcodecs.imwrite(file.getAbsolutePath(), image);
+                }*/
+                // Draw nozzle locations
+                /*for (int j = 0; j < averageOffsets.size(); j++) {
+                    Point pos = VisionUtils.getLocationPixels(camera,averageOffsets.get(j));
+                    Imgproc.circle(image, new org.opencv.core.Point(pos.getX(),pos.getY()), 20, FluentCv.colorToScalar(Color.red),5);
+                }*/
+                Point lastPoint = null;
+                for (int j = 0; j < 360; j += 10) {
+
+                    Point point = VisionUtils.getLocationPixels(camera,camera,camera.getLocation().derive(null, null, null, 0d).add(model.getOffset(j)));
+                    if (lastPoint != null) {
+                        Imgproc.line(image,new org.opencv.core.Point(lastPoint.getX(),lastPoint.getY()), new org.opencv.core.Point(point.getX(),point.getY()), FluentCv.colorToScalar(Color.magenta), 5);
+                    }
+                    lastPoint = point;
+                }
+                // Draw radius
+                Point pos = VisionUtils.getLocationPixels(camera,camera.getLocation().add(model.getAxisOffset()));
+                int radius = (int)((StarNozzleTipCalibration.ModelBasedRunoutCompensation) model).getRadius().getValue();
+                Imgproc.circle(image, new org.opencv.core.Point(pos.getX(),pos.getY()), radius, FluentCv.colorToScalar(Color.blue),5);
+
+                BufferedImage showResult = OpenCvUtils.toBufferedImage(image);
+                image.release();
+                MainFrame.get().getCameraViews().getCameraView(camera)
+                        .showFilteredImage(showResult, 500);
+
+            }
+        });
+    }
     private void calibrate() {
         UiUtils.submitUiMachineTask(() -> {
             StarNozzleTipCalibration calibration = nozzle.getNozzleTip().getCalibration();
@@ -402,9 +411,9 @@ public class StarNozzleOffsetWizard extends AbstractConfigurationWizard {
             nozzle.moveTo(selectedCameraItem.getCamera().getLocation());
 
             LengthConverter lengthConverter = new LengthConverter();
-            nozzleOffsetLocationX.setText(lengthConverter.convertForward(headOffsets.getLengthX()));
+            /*nozzleOffsetLocationX.setText(lengthConverter.convertForward(headOffsets.getLengthX()));
             nozzleOffsetLocationY.setText(lengthConverter.convertForward(headOffsets.getLengthX()));
-            nozzleOffsetLocationZ.setText(lengthConverter.convertForward(headOffsets.getLengthX()));
+            nozzleOffsetLocationZ.setText(lengthConverter.convertForward(headOffsets.getLengthX()));*/
         });
     }
 }

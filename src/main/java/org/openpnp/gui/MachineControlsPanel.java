@@ -213,6 +213,7 @@ public class MachineControlsPanel extends JPanel {
         z = l.getZ();
         c = l.getRotation();
 
+
         MainFrame.get().getDroLabel()
                 .setText(String.format("X:%-9s Y:%-9s Z:%-9s C:%-9s", //$NON-NLS-1$
                         String.format(Locale.US, configuration.getLengthDisplayFormat(), x),
